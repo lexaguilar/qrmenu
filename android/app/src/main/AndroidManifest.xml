@@ -9,7 +9,7 @@
     <uses-permission android:name="android.permission.CAMERA"/>
     <application
         android:name="io.flutter.app.FlutterApplication"
-        android:label="qrmenu"
+        android:label="Qr Menu"
         android:icon="@mipmap/launcher_icon">
         <activity
             android:name=".MainActivity"

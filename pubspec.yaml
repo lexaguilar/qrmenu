@@ -38,10 +38,15 @@ dependencies:
   smart_flare: any
   shared_preferences: ^0.5.10
   rating_bar: ^0.2.0
+  shimmer: ^1.1.1
 
 dev_dependencies:
+  flutter_launcher_name: "^0.0.1"
   flutter_test:
     sdk: flutter
+
+flutter_launcher_name:
+  name: "Qr Menu"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

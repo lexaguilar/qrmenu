@@ -24,8 +24,8 @@ class _ScannerState extends State<Scanner> {
     Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) =>
-                MenuPage(resultScan == cancelar ? 'laselva' : resultScan)));
+            builder: (context) => MenuPage(
+                resultScan == cancelar ? 'buffalowings' : resultScan)));
   }
 
   @override
@@ -75,7 +75,7 @@ class _ScannerState extends State<Scanner> {
             ),
             SizedBox(height: 50),
             Text(
-              "Press to scan",
+              "Presione para scanear",
               style: TextStyle(
                   fontSize: 20,
                   color: Color(primaryColor),

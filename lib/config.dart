@@ -39,15 +39,18 @@ class ConfigState extends State<Config> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
+            Padding(padding: EdgeInsets.only(left: 10)),
             Container(
-              child: Icon(Icons.save, color: Color(primaryColor)),
+              child: Icon(Icons.save, color: Color(primaryColor), size: 30),
             ),
             Container(
-              child: Text(
-                "Save automatically menu:",
-                style: TextStyle(fontSize: 18),
-              ),
-            ),
+                width: 260,
+                child: Column(children: <Widget>[
+                  ListTile(
+                      title: Text('Guardar automáticamente'),
+                      subtitle: Text(
+                          'Guardar menu inmediatamente despúes de escanear el código QR')),
+                ])),
             Container(
               child: Switch(
                   value: value,
@@ -58,7 +61,8 @@ class ConfigState extends State<Config> {
                       value = state;
                     });
                   }),
-            )
+            ),
+            Padding(padding: EdgeInsets.only(right: 10)),
           ],
         ),
       ],

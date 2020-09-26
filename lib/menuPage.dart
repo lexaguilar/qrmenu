@@ -59,6 +59,10 @@ class MenuState extends State<MenuPage> {
         }
       });
 
+      if (response.statusCode == responseNotFound) {
+        return;
+      }
+
       if (!mounted) return;
 
       setState(() {
@@ -80,7 +84,7 @@ class MenuState extends State<MenuPage> {
     ScrollController _scrollController = new ScrollController();
     return Scaffold(
         body: isLoading
-            ? showLoadingPage()
+            ? ShimmerList()
             : SingleChildScrollView(
                 controller: _scrollController,
                 child: Column(
@@ -126,8 +130,8 @@ class MenuState extends State<MenuPage> {
                           ),
                         ),
                         Container(
-                          margin: EdgeInsets.only(top: 60),
-                          constraints: BoxConstraints.expand(height: 200),
+                          margin: EdgeInsets.only(top: 68),
+                          constraints: BoxConstraints.expand(height: 160),
                           child: ListView(
                               padding: EdgeInsets.only(left: 40),
                               scrollDirection: Axis.horizontal,
@@ -140,105 +144,36 @@ class MenuState extends State<MenuPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
                               Container(
-                                margin: EdgeInsets.only(top: 40),
+                                margin: EdgeInsets.only(top: 30),
                                 child: Text(
-                                  "Menu",
+                                  "Menú",
                                   style: titileStyleBlack,
                                 ),
                               ),
                               Container(
-                                height: 530,
-                                child: ListView(
-                                  children: <Widget>[
-                                    Container(
-                                      height: 35,
-                                      margin: EdgeInsets.only(top: 0),
-                                      child: ListView.builder(
-                                        physics: ClampingScrollPhysics(),
-                                        scrollDirection: Axis.horizontal,
-                                        itemCount: tabs.length,
-                                        itemBuilder:
-                                            (BuildContext context, int x) {
-                                          return GestureDetector(
-                                            onTap: () {
-                                              _scrollController.animateTo(
-                                                250,
-                                                curve: Curves.easeOut,
-                                                duration: const Duration(
-                                                    milliseconds: 500),
-                                              );
-                                              setState(() {
-                                                selectedTab = x;
-                                                currentItemsMenu = itemsMenu
-                                                    .where((e) =>
-                                                        e.categoria == tabs[x])
-                                                    .toList();
-                                              });
-                                            },
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                  border: Border(
-                                                      bottom: BorderSide(
-                                                          color: x ==
-                                                                  selectedTab
-                                                              ? Color(
-                                                                  0xff42c4ee)
-                                                              : Colors.white))),
-                                              alignment: Alignment.center,
-                                              margin: EdgeInsets.symmetric(
-                                                  horizontal: 10),
-                                              padding: EdgeInsets.symmetric(
-                                                  horizontal: 10),
-                                              child: Text(
-                                                '${tabs[x]}',
-                                                style: TextStyle(
-                                                    fontSize: 18,
-                                                    color: x == selectedTab
-                                                        ? Color(primaryColor)
-                                                        : Colors.grey),
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                    Container(
-                                        height: 480,
-                                        child: ListView.builder(
-                                            itemCount: currentItemsMenu.length,
-                                            itemBuilder: (context, index) {
-                                              var item =
-                                                  currentItemsMenu[index];
-
-                                              return Container(
-                                                  decoration: boxDecoration,
-                                                  child: ListTile(
-                                                    title: Text(item.title),
-                                                    subtitle:
-                                                        Text(item.categoria),
-                                                    trailing: Text(
-                                                      "$money ${item.price}",
-                                                      style: TextStyle(
-                                                          fontSize: 16,
-                                                          fontWeight:
-                                                              FontWeight.bold),
-                                                    ),
-                                                    leading: item.hasImage
-                                                        ? CircleAvatar(
-                                                            backgroundImage:
-                                                                item.image,
-                                                            radius: 30,
-                                                          )
-                                                        : CircleAvatar(
-                                                            child: Text(
-                                                                item.title[0]),
-                                                            radius: 30,
-                                                          ),
-                                                  ));
-                                            }))
-                                  ],
-                                ),
-                              )
+                                margin: EdgeInsets.only(top: 5),
+                                constraints: BoxConstraints.expand(height: 60),
+                                child: ListView.builder(
+                                    physics: ClampingScrollPhysics(),
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: tabs.length,
+                                    itemBuilder: (BuildContext context, int x) {
+                                      var onTap = () {
+                                        setState(() {
+                                          selectedTab = x;
+                                          currentItemsMenu = itemsMenu
+                                              .where(
+                                                  (e) => e.categoria == tabs[x])
+                                              .toList();
+                                        });
+                                      };
+                                      return tabsMenu(
+                                          tabs[x], onTap, selectedTab == x);
+                                    }),
+                              ),
+                              ...currentItemsMenu
+                                  .map((e) => getMenu(e))
+                                  .toList()
                             ],
                           ),
                         )

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:qrmenu/constants/index.dart';
-
-import 'components/menuComponent.dart';
 import 'menuPage.dart';
 import 'models/db.dart';
 import 'models/menu.dart';
@@ -33,11 +31,11 @@ class MenuListState extends State<MenuList> {
   Widget build(BuildContext context) {
     return CustomScrollView(slivers: <Widget>[
       SliverAppBar(
-        //pinned: true,
         floating: false,
-        expandedHeight: 120.0,
+        expandedHeight: 80.0,
+        backgroundColor: Colors.white,
         flexibleSpace: FlexibleSpaceBar(
-          background: Image(image: AssetImage('assets/images/logo2.png')),
+          background: Image(image: AssetImage('assets/images/logo.png')),
         ),
       ),
       SliverFixedExtentList(
@@ -50,62 +48,73 @@ class MenuListState extends State<MenuList> {
         ]),
       ),
       SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            var companyName = menus[index].descripcion;
-            return Dismissible(
-                key: UniqueKey(),
-                onDismissed: (direction) {
-                  var menu = menus[index];
-                  Scaffold.of(context).showSnackBar(SnackBar(
-                    content: Text('$menu eliminado'),
-                    action: SnackBarAction(
-                      label: "DESHACER",
-                      onPressed: () {
-                        myDB.insertMenu(menu).then((value) => loadMenu());
-                      },
-                    ),
-                  ));
+        delegate: menus.length == 0
+            ? SliverChildBuilderDelegate((context, index) {
+                return Center(
+                    child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 100),
+                        child: Text(
+                          "No hay menus guardados",
+                          style: TextStyle(fontSize: 16),
+                        )));
+              }, childCount: 1)
+            : SliverChildBuilderDelegate(
+                (context, index) {
+                  var companyName = menus[index].descripcion;
 
-                  myDB.deleteMenu(menu.name).then((value) => loadMenu());
+                  return Dismissible(
+                      key: UniqueKey(),
+                      onDismissed: (direction) {
+                        var menu = menus[index];
+                        Scaffold.of(context).showSnackBar(SnackBar(
+                          content: Text('$menu eliminado'),
+                          action: SnackBarAction(
+                            label: "DESHACER",
+                            onPressed: () {
+                              myDB.insertMenu(menu).then((value) => loadMenu());
+                            },
+                          ),
+                        ));
+
+                        myDB.deleteMenu(menu.name).then((value) => loadMenu());
+                      },
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: EdgeInsets.only(right: 20.0),
+                        color: Colors.red,
+                        child: const Icon(
+                          Icons.delete,
+                          color: Colors.white,
+                        ),
+                      ),
+                      //child: getCompany(context, menus[index])
+                      child: Container(
+                        decoration: boxDecoration,
+                        child: ListTile(
+                            onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        MenuPage(menus[index].name))),
+                            leading: CircleAvatar(
+                              backgroundColor: colors[
+                                  letras.indexOf(companyName.toLowerCase()[0])],
+                              child: Text(companyName[0]),
+                              radius: 25,
+                            ),
+                            title: Text(
+                              menus[index].descripcion,
+                              style: TextStyle(fontSize: 18),
+                            ),
+                            subtitle: Text(menus[index].date),
+                            trailing: Icon(
+                              Icons.arrow_forward_ios,
+                              color: Colors.blueAccent,
+                            )),
+                      ));
                 },
-                background: Container(
-                  alignment: Alignment.centerRight,
-                  padding: EdgeInsets.only(right: 20.0),
-                  color: Colors.red,
-                  child: const Icon(
-                    Icons.delete,
-                    color: Colors.white,
-                  ),
-                ),
-                //child: getCompany(context, menus[index])
-                child: Container(
-                  decoration: boxDecoration,
-                  child: ListTile(
-                      onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  MenuPage(menus[index].name))),
-                      leading: CircleAvatar(
-                        backgroundColor: colors[
-                            letras.indexOf(companyName.toLowerCase()[0])],
-                        child: Text(companyName[0]),
-                        radius: 25,
-                      ),
-                      title: Text(
-                        menus[index].descripcion,
-                        style: TextStyle(fontSize: 18),
-                      ),
-                      subtitle: Text(menus[index].date),
-                      trailing: Icon(
-                        Icons.arrow_forward_ios,
-                        color: Colors.blueAccent,
-                      )),
-                ));
-          },
-          childCount: menus.length,
-        ),
+                childCount: menus.length,
+              ),
       ),
     ]);
     // return Scaffold(
