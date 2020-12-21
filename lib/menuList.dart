@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_share/flutter_share.dart';
 import 'package:qrmenu/constants/index.dart';
 import 'menuPage.dart';
 import 'models/db.dart';
@@ -27,171 +29,107 @@ class MenuListState extends State<MenuList> {
     myDB.create().then((value) => loadMenu());
   }
 
+  Widget noItem(int count) {
+    if (count == 0) {
+      return Center(
+          child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 100),
+              child: Column(children: [
+                Text(
+                  "No hay menus guardados",
+                  style: TextStyle(fontSize: 16),
+                ),
+              ])));
+    } else
+      return Padding(padding: EdgeInsets.all(0));
+  }
+
   @override
   Widget build(BuildContext context) {
-    return CustomScrollView(slivers: <Widget>[
-      SliverAppBar(
-        floating: false,
-        expandedHeight: 80.0,
-        backgroundColor: Colors.white,
-        flexibleSpace: FlexibleSpaceBar(
-          background: Image(image: AssetImage('assets/images/logo.png')),
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark));
+
+    return Scaffold(
+        body: SingleChildScrollView(
+            child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(height: 30),
+        Container(
+          alignment: Alignment.center,
+          child: Image.asset(
+            "assets/images/logo.png",
+            scale: 2,
+          ),
         ),
-      ),
-      SliverFixedExtentList(
-        itemExtent: 1,
-        delegate: SliverChildListDelegate([
-          Container(color: Colors.white),
-          Container(color: Colors.white),
-          Container(color: Colors.white),
-          Container(color: Colors.white),
-        ]),
-      ),
-      SliverList(
-        delegate: menus.length == 0
-            ? SliverChildBuilderDelegate((context, index) {
-                return Center(
-                    child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 100),
-                        child: Text(
-                          "No hay menus guardados",
-                          style: TextStyle(fontSize: 16),
-                        )));
-              }, childCount: 1)
-            : SliverChildBuilderDelegate(
-                (context, index) {
-                  var companyName = menus[index].descripcion;
-
-                  return Dismissible(
-                      key: UniqueKey(),
-                      onDismissed: (direction) {
-                        var menu = menus[index];
-                        Scaffold.of(context).showSnackBar(SnackBar(
-                          content: Text('$menu eliminado'),
-                          action: SnackBarAction(
-                            label: "DESHACER",
-                            onPressed: () {
-                              myDB.insertMenu(menu).then((value) => loadMenu());
-                            },
-                          ),
-                        ));
-
-                        myDB.deleteMenu(menu.name).then((value) => loadMenu());
-                      },
-                      background: Container(
-                        alignment: Alignment.centerRight,
-                        padding: EdgeInsets.only(right: 20.0),
-                        color: Colors.red,
-                        child: const Icon(
-                          Icons.delete,
-                          color: Colors.white,
-                        ),
+        ...menus.map((menu) {
+          return Container(
+              child: Dismissible(
+                  key: UniqueKey(),
+                  onDismissed: (direction) {
+                    Scaffold.of(context).showSnackBar(SnackBar(
+                      content: Text('$menu eliminado'),
+                      action: SnackBarAction(
+                        label: "DESHACER",
+                        onPressed: () {
+                          myDB.insertMenu(menu).then((value) => loadMenu());
+                        },
                       ),
-                      //child: getCompany(context, menus[index])
-                      child: Container(
-                        decoration: boxDecoration,
-                        child: ListTile(
-                            onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        MenuPage(menus[index].name))),
-                            leading: CircleAvatar(
-                              backgroundColor: colors[
-                                  letras.indexOf(companyName.toLowerCase()[0])],
-                              child: Text(companyName[0]),
-                              radius: 25,
-                            ),
-                            title: Text(
-                              menus[index].descripcion,
-                              style: TextStyle(fontSize: 18),
-                            ),
-                            subtitle: Text(menus[index].date),
-                            trailing: Icon(
-                              Icons.arrow_forward_ios,
-                              color: Colors.blueAccent,
-                            )),
-                      ));
-                },
-                childCount: menus.length,
-              ),
-      ),
-    ]);
-    // return Scaffold(
-    //   body: Container(
-    //     child: menus == null || menus.length == 0
-    //         ? Center(
-    //             child: Text(
-    //             "There is no menu yet",
-    //             style: TextStyle(fontSize: 16),
-    //           ))
-    //         : RefreshIndicator(
-    //             key: refreshKey,
-    //             onRefresh: () async {
-    //               await myDB.menus();
-    //             },
-    //             child: ListView.builder(
-    //               padding: EdgeInsets.all(20.0),
-    //               itemCount: menus.length,
-    //               itemBuilder: (context, index) {
-    //                 return Dismissible(
-    //                     key: UniqueKey(),
-    //                     onDismissed: (direction) {
-    //                       var menu = menus[index];
-    //                       Scaffold.of(context).showSnackBar(SnackBar(
-    //                         content: Text('$menu eliminado'),
-    //                         action: SnackBarAction(
-    //                           label: "DESHACER",
-    //                           onPressed: () {
-    //                             myDB
-    //                                 .insertMenu(menu)
-    //                                 .then((value) => loadMenu());
-    //                           },
-    //                         ),
-    //                       ));
+                    ));
 
-    //                       myDB
-    //                           .deleteMenu(menu.name)
-    //                           .then((value) => loadMenu());
-    //                     },
-    //                     background: Container(
-    //                       alignment: Alignment.centerRight,
-    //                       padding: EdgeInsets.only(right: 20.0),
-    //                       color: Colors.red,
-    //                       child: const Icon(
-    //                         Icons.delete,
-    //                         color: Colors.white,
-    //                       ),
-    //                     ),
-    //                     child: Card(
-    //                       elevation: 3,
-    //                       shape: RoundedRectangleBorder(
-    //                         borderRadius: BorderRadius.circular(15.0),
-    //                       ),
-    //                       child: ListTile(
-    //                           onTap: () => Navigator.push(
-    //                               context,
-    //                               MaterialPageRoute(
-    //                                   builder: (context) =>
-    //                                       MenuPage(menus[index].name))),
-    //                           leading: Icon(
-    //                             Icons.home,
-    //                             size: 40,
-    //                           ),
-    //                           title: Text(
-    //                             menus[index].descripcion,
-    //                             style: TextStyle(fontSize: 18),
-    //                           ),
-    //                           subtitle: Text(menus[index].date),
-    //                           trailing: Icon(
-    //                             Icons.arrow_forward_ios,
-    //                             color: Colors.blueAccent,
-    //                           )),
-    //                     ));
-    //               },
-    //             ),
-    //           ),
-    //   ),
-    // );
+                    myDB.deleteMenu(menu.name).then((value) => loadMenu());
+                  },
+                  background: Container(
+                    alignment: Alignment.centerRight,
+                    padding: EdgeInsets.only(right: 20.0),
+                    color: Colors.red,
+                    child: const Icon(
+                      Icons.delete,
+                      color: Colors.white,
+                    ),
+                  ),
+                  child: Container(
+                    decoration: boxDecoration,
+                    child: ListTile(
+                      onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => MenuPage(menu.name))),
+                      leading: CircleAvatar(
+                        backgroundColor: colors[
+                            letras.indexOf(menu.descripcion.toLowerCase()[0])],
+                        child: Text(
+                          menu.descripcion[0],
+                          style: TextStyle(fontSize: 20),
+                        ),
+                        radius: 25,
+                      ),
+                      title: Text(
+                        menu.descripcion,
+                        style: TextStyle(fontSize: 18),
+                      ),
+                      subtitle: Row(
+                        children: [
+                          ratingBarReadOnly(menu.valoration, size: 15)
+                        ],
+                      ),
+                      trailing: GestureDetector(
+                          onTap: () {
+                            FlutterShare.share(
+                                title: menu.descripcion,
+                                text: menu.descripcion,
+                                linkUrl:
+                                    'https://qrmenuapp.azurewebsites.net/home/privacy?name=' +
+                                        menu.name,
+                                chooserTitle: menu.descripcion);
+                          },
+                          child: Icon(Icons.share)),
+                    ),
+                  )));
+        }).toList(),
+        noItem(menus.length)
+      ],
+    )));
   }
 }

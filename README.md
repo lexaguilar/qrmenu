@@ -17,7 +17,6 @@ samples, guidance on mobile development, and a full API reference.
 
 
 TODOS
-la tabla Items columna descriocion debe limitarse a 110 maximo
 Imagen restaurante
 Valoracion
-Logo
+

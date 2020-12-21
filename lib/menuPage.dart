@@ -1,6 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:device_info/device_info.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -42,51 +45,77 @@ class MenuState extends State<MenuPage> {
   }
 
   Future getData(String name) async {
-    var url = '$pathUrl?name=$name';
-    final response = await http.get(url);
-    if (response.statusCode == responseOk) {
-      var jsonResponse = MenuWithItems.fromJson(json.decode(response.body));
+    AndroidDeviceInfo androidInfo = await getDeviceInfo();
+    var url = '${pathUrl}user/authenticatedevice';
 
-      tabs = jsonResponse.items.map((e) => e.categoria).toSet().toList();
+    final authRequest = await http.post(url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          'DeviceId': androidInfo.id,
+          'QrCode': name,
+          'Model': androidInfo.model,
+        }));
 
-      _prefs.then((SharedPreferences prefs) {
-        var saveValue = (prefs.getBool(key) ?? true);
-        if (saveValue) {
-          var newMenu = Menu(
-              name: jsonResponse.name, descripcion: jsonResponse.descripcion);
+    if (authRequest.statusCode == responseOk) {
+      var auth = Auth.fromJson(json.decode(authRequest.body));
 
-          myDB.insertMenu(newMenu);
+      final SharedPreferences prefs = await _prefs;
+      prefs.setString(keyToken, 'Bearer ${auth.jwtToken}');
+
+      final response = await http.get('${pathUrl}devices/menu', headers: {
+        HttpHeaders.authorizationHeader: 'Bearer ${auth.jwtToken}',
+      });
+
+      if (response.statusCode == responseOk) {
+        itemsMenu.clear();
+        for (Map m in json.decode(response.body)) {
+          itemsMenu.add(Item.fromJson(m, 'Bearer ${auth.jwtToken}'));
         }
-      });
 
-      if (response.statusCode == responseNotFound) {
-        return;
+        tabs = itemsMenu.map((e) => e.categoria).toSet().toList();
+
+        _prefs.then((SharedPreferences prefs) {
+          var saveValue = (prefs.getBool(key) ?? true);
+          if (saveValue) {
+            var newMenu =
+                Menu(name: name, descripcion: auth.companyName, valoration: 0);
+
+            myDB.insertMenu(newMenu);
+          }
+        });
+
+        if (response.statusCode == responseNotFound) {
+          return;
+        }
+
+        if (!mounted) return;
+
+        setState(() {
+          companyName = auth.companyName;
+          itemsMenu = itemsMenu;
+          itemsMenuSuggestions =
+              itemsMenu.where((element) => element.isSuggestion).toList();
+          currentItemsMenu =
+              itemsMenu.where((e) => e.categoria == tabs[0]).toList();
+          selectedTab = 0;
+          isLoading = false;
+        });
       }
-
-      if (!mounted) return;
-
-      setState(() {
-        companyName = jsonResponse.descripcion;
-        itemsMenu = jsonResponse.items;
-        itemsMenuSuggestions = jsonResponse.items
-            .where((element) => element.isSuggestion)
-            .toList();
-        currentItemsMenu =
-            itemsMenu.where((e) => e.categoria == tabs[0]).toList();
-        selectedTab = 0;
-        isLoading = false;
-      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    ScrollController _scrollController = new ScrollController();
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark));
     return Scaffold(
+        // backgroundColor: Color(0xff072736),
         body: isLoading
             ? ShimmerList()
             : SingleChildScrollView(
-                controller: _scrollController,
                 child: Column(
                   children: <Widget>[
                     Stack(
@@ -131,7 +160,7 @@ class MenuState extends State<MenuPage> {
                         ),
                         Container(
                           margin: EdgeInsets.only(top: 68),
-                          constraints: BoxConstraints.expand(height: 160),
+                          constraints: BoxConstraints.expand(height: 170),
                           child: ListView(
                               padding: EdgeInsets.only(left: 40),
                               scrollDirection: Axis.horizontal,
@@ -139,12 +168,12 @@ class MenuState extends State<MenuPage> {
                         ),
                         Container(
                           margin: EdgeInsets.only(top: 200),
-                          padding: EdgeInsets.all(20),
+                          padding: EdgeInsets.only(top: 20, left: 5, right: 5),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
                               Container(
-                                margin: EdgeInsets.only(top: 30),
+                                margin: EdgeInsets.only(top: 30, left: 15),
                                 child: Text(
                                   "Menú",
                                   style: titileStyleBlack,
@@ -172,7 +201,7 @@ class MenuState extends State<MenuPage> {
                                     }),
                               ),
                               ...currentItemsMenu
-                                  .map((e) => getMenu(e))
+                                  .map((e) => getMenu(context, e))
                                   .toList()
                             ],
                           ),

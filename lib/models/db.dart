@@ -25,7 +25,7 @@ class MyDB {
           );
 
         return db.execute(
-          "CREATE TABLE IF NOT EXISTS menus(name TEXT PRIMARY KEY, descripcion TEXT, date TEXT)",
+          "CREATE TABLE IF NOT EXISTS menus(name TEXT PRIMARY KEY, descripcion TEXT, valoration DOUBLE)",
         );
       },
       version: 1,
@@ -55,7 +55,7 @@ class MyDB {
       return Menu(
         name: maps[i]['name'],
         descripcion: maps[i]['descripcion'],
-        date: maps[i]['date'],
+        valoration: maps[i]['valoration'],
       );
     });
   }

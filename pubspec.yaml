@@ -39,7 +39,11 @@ dependencies:
   shared_preferences: ^0.5.10
   rating_bar: ^0.2.0
   shimmer: ^1.1.1
-
+  receive_sharing_intent: ^1.4.1
+  flutter_share: ^1.0.2+1
+  like_button: ^1.0.1
+  device_info: ^0.4.2+9
+  
 dev_dependencies:
   flutter_launcher_name: "^0.0.1"
   flutter_test:

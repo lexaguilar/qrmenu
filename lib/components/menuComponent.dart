@@ -1,10 +1,36 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:qrmenu/constants/index.dart';
 import 'package:qrmenu/models/item.dart';
-import 'package:rating_bar/rating_bar.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../itemDetail.dart';
+import 'likeButton.dart';
 
 List<Widget> getSuggestions(List<Item> items) {
   return items.map((item) => getSuggestion(item)).toList();
+}
+
+Future<bool> onLikeButtonTapped(bool isLiked, int itemId) async {
+  Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+
+  var pre = await _prefs;
+  var token = (pre.getString(keyToken) ?? "");
+
+  http.post('${pathUrl}devices/menu/items/$itemId/feedback',
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        HttpHeaders.authorizationHeader: '$token',
+      },
+      body: jsonEncode(<String, int>{
+        'Feedback': 0,
+        'Like': isLiked ? 0 : 1,
+      }));
+
+  return !isLiked;
 }
 
 Widget getSuggestion(Item item) {
@@ -12,7 +38,7 @@ Widget getSuggestion(Item item) {
       padding: EdgeInsets.all(10),
       margin: EdgeInsets.only(
         right: 20,
-        bottom: item.descripcion.length > 20 ? 5 : 20,
+        bottom: item.descripcion.length > 20 ? 5 : 30,
       ),
       width: item.descripcion.length > 20 ? 240 : 210,
       decoration: BoxDecoration(
@@ -25,34 +51,40 @@ Widget getSuggestion(Item item) {
           ],
           borderRadius: BorderRadius.all(Radius.circular(10))),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                item.hasImage
-                    ? CircleAvatar(
-                        backgroundImage: item.image,
-                        radius: 30,
-                      )
-                    : CircleAvatar(
-                        child: Text(item.title[0]),
-                        radius: 30,
-                      ),
+                circleAvatar(item, 30),
                 Padding(padding: EdgeInsets.only(left: 5)),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(item.title, style: jobCardTitileStyleBlue),
-                    Text(
-                      '${item.money} ${item.price.toStringAsFixed(2)}',
-                      style: new TextStyle(
-                          fontFamily: 'Avenir',
-                          color: darkGreen,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15),
-                    ),
+                    Container(
+                        width: item.title.length > 16 ||
+                                item.descripcion.length > 20
+                            ? 150
+                            : 100,
+                        child: Text(item.title,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 2,
+                            style: jobCardTitileStyleBlue)),
+                    Row(
+                      children: [
+                        Text(
+                          '${item.money} ${item.price.toStringAsFixed(2)}',
+                          style: new TextStyle(
+                              fontFamily: 'Avenir',
+                              color: darkGreen,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15),
+                        ),
+                        price(item),
+                      ],
+                    )
                   ],
                 ),
               ]),
@@ -61,9 +93,7 @@ Widget getSuggestion(Item item) {
               Container(
                 width: item.descripcion.length > 20 ? 220 : 180,
                 child: Text(
-                  item.descripcion.length == 0
-                      ? item.categoria
-                      : item.descripcion,
+                  descriptionComponse(item),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 5,
                   style: TextStyle(
@@ -76,17 +106,9 @@ Widget getSuggestion(Item item) {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              RatingBar.readOnly(
-                filledColor: Colors.yellow[700],
-                initialRating: 3,
-                filledIcon: Icons.star,
-                emptyIcon: Icons.star_border,
-                size: 15,
-              ),
-              Icon(
-                Icons.favorite_border,
-                size: 25,
-              )
+              ratingBarReadOnly(item.valoration),
+              likeButton(item.isLiked, item.likeCount, Icons.thumb_up,
+                  (like) => onLikeButtonTapped(like, item.id)),
             ],
           )
         ],
@@ -112,27 +134,61 @@ Widget tabsMenu(String tab, Function fuc, bool active) {
       ));
 }
 
-Widget getMenu(Item item) {
-  return Container(
-      decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border(bottom: BorderSide(color: Colors.grey[300]))),
-      height: 70,
-      child: ListTile(
-        title: Text(item.title),
-        subtitle: Text(item.categoria),
-        trailing: Text(
-          "${item.money} ${item.price.toStringAsFixed(2)}",
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        leading: item.hasImage
-            ? CircleAvatar(
-                backgroundImage: item.image,
-                radius: 30,
-              )
-            : CircleAvatar(
-                child: Text(item.title[0]),
-                radius: 30,
+Widget getMenu(BuildContext context, Item item) {
+  return GestureDetector(
+      onTap: () => Navigator.push(
+          context, MaterialPageRoute(builder: (context) => ItemDetail(item))),
+      child: Container(
+        decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(bottom: BorderSide(color: Colors.grey[100]))),
+        height: 70,
+        child: Row(
+          children: <Widget>[
+            Container(
+              padding: EdgeInsets.all(4),
+              height: 100,
+              width: 70,
+              child: circleAvatar(item, 30),
+            ),
+            Expanded(
+              child: Container(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(item.title,
+                        softWrap: false,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: Colors.black, fontSize: 17)),
+                    Text(descriptionComponse(item),
+                        softWrap: false,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: Colors.grey[600])),
+                    Row(
+                      children: [
+                        ratingBarReadOnly(item.valoration, size: 14),
+                      ],
+                    )
+                  ],
+                ),
               ),
+            ),
+            Container(
+              height: 100,
+              width: 90,
+              child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "${item.money} ${item.price.toStringAsFixed(2)}",
+                      style:
+                          TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                    ),
+                    price(item),
+                  ]),
+            ),
+          ],
+        ),
       ));
 }

@@ -1,14 +1,21 @@
+import 'package:device_info/device_info.dart';
 import 'package:flutter/material.dart';
+import 'package:qrmenu/models/item.dart';
+import 'package:rating_bar/rating_bar.dart';
 
 final cancelar = "-1";
 final key = "state";
+final keyToken = "keyToken";
+final keyTheme = "keyTheme";
+final userIdKey = "USER_ID";
 
 //Colors
 final primaryColor = 0xff27507e;
 final accentColor = 0xff42c4ee;
 
 //http
-final pathUrl = 'https://qrmenuapp.azurewebsites.net/menu';
+//final pathUrl = 'https://qrmenuapp.azurewebsites.net/api/menu/';
+final pathUrl = 'http://qrcube.net/api/';
 
 final responseOk = 200;
 final responseNotFound = 404;
@@ -32,7 +39,7 @@ final imageDefault = [
 ];
 
 final boxDecoration =
-    BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey[300])));
+    BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey[200])));
 
 final borderRadius = BorderRadius.all(Radius.circular(10));
 
@@ -138,3 +145,64 @@ final letras = [
   'y',
   'z'
 ];
+
+var valorationString = [
+  "",
+  "No me gusta",
+  "Me gusta poco",
+  "No está mal",
+  "Me gusta",
+  "Me encanta"
+];
+
+Future<AndroidDeviceInfo> getDeviceInfo() async {
+  var deviceInfo = DeviceInfoPlugin();
+  AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+
+  return androidInfo;
+}
+
+Widget circleAvatar(item, double radius, {double fontSize = 20}) {
+  return item.hasImage
+      ? CircleAvatar(
+          backgroundImage: item.image,
+          radius: radius,
+        )
+      : CircleAvatar(
+          child: Text(item.title[0], style: TextStyle(fontSize: fontSize)),
+          radius: radius,
+        );
+}
+
+String descriptionComponse(Item item) {
+  return item.descripcion.length == 0 ? item.categoria : item.descripcion;
+}
+
+Widget ratingBarReadOnly(double initialRating, {double size = 16}) {
+  return RatingBar.readOnly(
+    filledColor: Colors.yellow[700],
+    initialRating: initialRating,
+    filledIcon: Icons.star,
+    emptyIcon: Icons.star_border,
+    halfFilledIcon: Icons.star_half,
+    halfFilledColor: Colors.yellow[700],
+    size: size,
+    isHalfAllowed: true,
+  );
+}
+
+class AppColors {
+  static const mainColor = Color(0XFFe5eefc);
+  static const styleColor = Color(0XFF6f7e96);
+  static const activeColor = Color(0XFFd0ddf3);
+  static const lightBlue = Color(0XFF92aeff);
+  static const darkBlue = Color(0XFF5880ff);
+  static const lightBlueShadow = Color(0XAA92aeff);
+}
+
+Widget price(Item item) {
+  return Text(
+    "${!item.hasIva ? '+IVA' : ''}",
+    style: TextStyle(fontSize: 12, color: Colors.grey),
+  );
+}

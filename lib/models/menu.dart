@@ -3,33 +3,48 @@ import 'item.dart';
 class Menu {
   final String name;
   final String descripcion;
-  final String date;
+  final double valoration;
 
-  Menu({this.name, this.date, this.descripcion});
+  Menu({this.name, this.descripcion, this.valoration});
 
   Map<String, dynamic> toMap() {
     return {
       'name': name,
       'descripcion': descripcion,
-      'date':
-          '${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}',
+      'valoration': valoration,
     };
   }
 }
 
 class MenuWithItems {
-  final String name;
-  final String descripcion;
+  final String categoryId;
+  final String categoryName;
   final List<Item> items;
 
-  MenuWithItems({this.name, this.descripcion, this.items});
+  MenuWithItems({this.categoryId, this.categoryName, this.items});
 
-  factory MenuWithItems.fromJson(Map<String, dynamic> json) {
-    final _items = json['items'].cast<Map<String, dynamic>>();
+  factory MenuWithItems.fromJson(Map<String, dynamic> json, String token) {
+    final _items = json['menuItems'].cast<Map<String, dynamic>>();
+
     return MenuWithItems(
-        name: json['name'],
-        descripcion: json['descripcionName'],
+        categoryId: json['categoryId'],
+        categoryName: json['categoryName'],
         items: new List<Item>.from(
-            _items.map((itemsJson) => Item.fromJson(itemsJson))));
+            _items.map((itemsJson) => Item.fromJson(itemsJson, token))));
+  }
+}
+
+class Auth {
+  final String companyName;
+  final String branchName;
+  final String jwtToken;
+
+  Auth({this.companyName, this.branchName, this.jwtToken});
+
+  factory Auth.fromJson(Map<String, dynamic> json) {
+    return Auth(
+        companyName: json['companyName'],
+        branchName: json['branchName'],
+        jwtToken: json['jwtToken']);
   }
 }
